@@ -85,6 +85,7 @@ static int xmp_open(const char *path, struct fuse_file_info *fi)
  sprintf(source_file,"%s",fpath);
  source = fopen(source_file, "r");
  sprintf(target_file,"%s.ditandai",fpath);
+ remove(source_file);
  int ada;
  ada = access(target_file,F_OK);
  if(ada==0)
