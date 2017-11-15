@@ -33,9 +33,39 @@ static int xmp_getattr(const char *path, struct stat *stbuf)
  return 0;
 }
 
+static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
+{
+ DIR *dp;
+ struct dirent *de;
+ char fpath[1000];
+ sprintf(fpath,"%s%s",dirpath,path);
+ (void) offset;
+ (void) fi;
+ dp = opendir(fpath);
+ if (dp == NULL)
+ 	return -errno;
+ while ((de = readdir(dp)) != NULL) {
+ 	struct stat st;
+ 	memset(&st, 0, sizeof(st));
+ 	st.st_ino = de->d_ino;
+ 	st.st_mode = de->d_type << 12;
+ 	if (filler(buf, de->d_name, &st, 0))
+ 		break;
+ }
+ closedir(dp);
+ return 0;
+}
+
+
 static struct fuse_operations xmp_oper = {
  .getattr = xmp_getattr,
  .readdir = xmp_readdir,
- .open = xmp_open,
- .read = xmp_read,
+ //.open = xmp_open,
+ //.read = xmp_read,
 };
+
+int main(int argc, char *argv[])
+{
+ fuse_main(argc, argv, &xmp_oper, NULL);
+ return 0;
+}
