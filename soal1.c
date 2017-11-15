@@ -56,12 +56,82 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_
  return 0;
 }
 
+int flags(const char *namafile)
+
+{
+ int x = strlen(namafile);
+ char file[100];
+ strcpy(file,namafile+x-4);
+ if(strcmp(file,".txt")==0||strcmp(file,".doc")==0||strcmp(file,".pdf")==0)
+ return 1;
+ else
+ return 0;
+}
+
+
+
+static int xmp_open(const char *path, struct fuse_file_info *fi)
+{
+ int res;
+ char fpath[1000];
+ sprintf(fpath,"%s%s",dirpath,path);
+ if(flags (fpath))
+ {
+ 	char command[100];
+ 	sprintf(command,"zenity --error --text='Terjadi kesalahan! File berisi konten berbahaya.'");
+ 	system(command);
+ 	char ch, source_file[1000], target_file[1000];
+ FILE *source, *target;
+ sprintf(source_file,"%s",fpath);
+ source = fopen(source_file, "r");
+ sprintf(target_file,"%s.ditandai",fpath);
+ int ada;
+ ada = access(target_file,F_OK);
+ if(ada==0)
+ {
+ remove(target_file);
+ }
+ target = fopen(target_file, "w");
+ while( ( ch = fgetc(source) ) != EOF ) fputc(ch, target);
+ sprintf(command,"chmod 000 '%s.ditandai'",fpath);
+ system(command);
+ fclose(source);
+ fclose(target);
+ res = open(fpath, fi->flags);
+
+ if (res == -1)
+ return -errno; }
+
+ close(res);
+  return 0;
+
+ 
+
+}
+
+static int xmp_read(const char *path, char *buf,size_t size, off_t offset, struct fuse_file_info *fi)
+
+{
+ int fd;
+ int res;
+ char fpath[1000];
+ sprintf(fpath,"%s%s",dirpath,path);
+ (void) fi;
+ fd = open(fpath, O_RDONLY);
+ if (fd == -1)
+ return -errno;
+ res = pread(fd, buf, size, offset);
+ if (res == -1)
+ res = -errno;
+ close(fd);
+ return res;
+}
 
 static struct fuse_operations xmp_oper = {
  .getattr = xmp_getattr,
  .readdir = xmp_readdir,
- //.open = xmp_open,
- //.read = xmp_read,
+ .open = xmp_open,
+ .read = xmp_read,
 };
 
 int main(int argc, char *argv[])
