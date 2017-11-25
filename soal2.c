@@ -72,32 +72,28 @@ int flags(const char *namafile)
 
 static int xmp_open(const char *path, struct fuse_file_info *fi)
 {
+  
  int res;
  char fpath[1000];
+ char mindah[1000];
+ sprintf(mindah, "%s", path);
  sprintf(fpath,"%s%s",dirpath,path);
  if(flags (fpath))
  {
- 	char command[100];
- 	sprintf(command,"zenity --error --text='Terjadi kesalahan! File berisi konten berbahaya.'");
- 	system(command);
- 	char ch, source_file[1000], target_file[1000];
- FILE *source, *target;
- sprintf(source_file,"%s",fpath);
- source = fopen(source_file, "r");
- sprintf(target_file,"%s.ditandai",fpath);
- remove(source_file);
- int ada;
- ada = access(target_file,F_OK);
- if(ada==0)
- {
- remove(target_file);
- }
- target = fopen(target_file, "w");
- while( ( ch = fgetc(source) ) != EOF ) fputc(ch, target);
- sprintf(command,"chmod 000 '%s.ditandai'",fpath);
- system(command);
- fclose(source);
- fclose(target);
+ 	char file[1000];
+		sprintf(file, "%s.ditandai", fpath);
+		rename(fpath,file);
+		system("chmod 000 /home/dewisekar/Documents/*.ditandai");
+		system("zenity --error --text='Terjadi kesalahan! File berisi konten berbahaya.'");
+		
+		system("mkdir /home/dewisekar/Documents/rahasia");
+		system("mv /home/dewisekar/Documents/*.ditandai /home/dewisekar/Documents/rahasia");
+return -errno;
+ 	}
+
+else
+{
+ 
  res = open(fpath, fi->flags);
 
  if (res == -1)
@@ -106,9 +102,10 @@ static int xmp_open(const char *path, struct fuse_file_info *fi)
  close(res);
   return 0;
 
- 
 
 }
+
+
 
 static int xmp_read(const char *path, char *buf,size_t size, off_t offset, struct fuse_file_info *fi)
 
@@ -127,6 +124,10 @@ static int xmp_read(const char *path, char *buf,size_t size, off_t offset, struc
  close(fd);
  return res;
 }
+
+
+
+
 
 static struct fuse_operations xmp_oper = {
  .getattr = xmp_getattr,
